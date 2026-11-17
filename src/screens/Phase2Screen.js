@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View, StyleSheet, useWindowDimensions } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaFrame, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import BottomSheet from '@gorhom/bottom-sheet';
 
@@ -26,14 +26,22 @@ const SIM_RATIO = 0.36; // simulator takes ~36% of the screen in EDIT mode
  */
 function Phase2Content({ navigation }) {
 
-  const { width, height } = useWindowDimensions();
+  // Full root size (includes the area behind the system bars), see OrientedScreen.
+  const { width, height } = useSafeAreaFrame();
   const insets = useSafeAreaInsets();
   const sheetRef = useRef(null);
   const [mode, setMode] = useState('edit');
   const playing = mode === 'play';
 
-  const minSnap = Math.max(Math.round(height * 0.1), HANDLE_H);
-  const snapPoints = useMemo(() => [minSnap, '50%', '90%'], [minSnap]);
+  // Android selalu edge-to-edge: sheet digambar sampai ke belakang tombol navigasi HP.
+  // Tambah insets.bottom supaya handle + toggle tetap di ATAS nav bar 3-tombol
+  // (kalau navigasi gesture, insets.bottom kecil jadi hampir tidak berubah).
+  const navBar = insets.bottom;
+  const minSnap = Math.max(Math.round(height * 0.1), HANDLE_H) + navBar;
+  const snapPoints = useMemo(
+    () => [minSnap, Math.round(height * 0.5) + navBar, '90%'],
+    [minSnap, height, navBar]
+  );
 
   // Simulator height animates between 36% (edit) and everything above the collapsed sheet (play).
   const simH = useSharedValue(height * SIM_RATIO);

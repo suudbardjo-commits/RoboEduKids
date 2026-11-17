@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
-import { useWindowDimensions } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import { useSafeAreaFrame } from 'react-native-safe-area-context';
 import * as ScreenOrientation from 'expo-screen-orientation';
 
 const L = ScreenOrientation.OrientationLock;
@@ -17,7 +17,9 @@ const LANDSCAPE_LOCKS = [L.LANDSCAPE, L.LANDSCAPE_LEFT, L.LANDSCAPE_RIGHT];
  * @returns {boolean} ready
  */
 export default function useOrientationLock(lock) {
-  const { width, height } = useWindowDimensions();
+  // Real root-view size (see OrientedScreen): the shape check must use the same size the
+  // screen is laid out with, otherwise content could mount before the frame has rotated.
+  const { width, height } = useSafeAreaFrame();
   const [applied, setApplied] = useState(false);
   const [timedOut, setTimedOut] = useState(false);
 

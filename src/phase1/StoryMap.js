@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Text, Pressable, StyleSheet, useWindowDimensions } from 'react-native';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -7,7 +7,7 @@ import Animated, {
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaFrame, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
 import { LEVEL_COUNT } from './blocks';
@@ -46,7 +46,8 @@ function PulseRing({ active, size }) {
 
 /** Full-screen story map with 12 level nodes. Only colored Views, no images. */
 export default function StoryMap({ onSelect, onBack }) {
-  const { width, height } = useWindowDimensions();
+  // Full root size (includes the area behind the system bars), see OrientedScreen.
+  const { width, height } = useSafeAreaFrame();
   const insets = useSafeAreaInsets();
   const stars = usePhase1Store((s) => s.stars);
   const completed = completedLevels(stars);
@@ -54,7 +55,14 @@ export default function StoryMap({ onSelect, onBack }) {
   const toggleAudio = usePhase1Store((s) => s.toggleAudio);
 
   const nodeSize = Math.max(52, Math.min(84, Math.round(Math.min(width, height) * 0.17)));
-  const pos = NODES.map((n) => ({ x: (n.x / 100) * width, y: (n.y / 100) * height }));
+  // Node diletakkan di dalam area aman: saat landscape, tombol navigasi HP (3 tombol)
+  // biasanya pindah ke sisi kiri/kanan dan bisa menutupi level paling ujung.
+  const safeW = width - insets.left - insets.right;
+  const safeH = height - insets.top - insets.bottom;
+  const pos = NODES.map((n) => ({
+    x: insets.left + (n.x / 100) * safeW,
+    y: insets.top + (n.y / 100) * safeH,
+  }));
 
   return (
     <View style={styles.root}>
