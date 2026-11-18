@@ -1,11 +1,12 @@
-import { colors } from '../theme';
+import { night } from '../theme';
 
-// Kategori blok di sidebar kiri.
+// Kategori blok di sidebar kiri. Warna diambil dari palet malam; ikon dan nama
+// ikut membedakan kategori, jadi tidak bergantung pada warna saja.
 export const CATEGORIES = [
-  { id: 'event', label: 'Kejadian', icon: 'flash', color: colors.neonAmber },
-  { id: 'motion', label: 'Gerak', icon: 'navigate', color: colors.neonCyan },
-  { id: 'control', label: 'Kontrol', icon: 'repeat', color: colors.neonPink },
-  { id: 'variable', label: 'Variabel', icon: 'cube', color: colors.neonGreen },
+  { id: 'event', label: 'Kejadian', icon: 'flag', color: night.mustard },
+  { id: 'motion', label: 'Gerak', icon: 'navigate', color: night.blue },
+  { id: 'control', label: 'Kontrol', icon: 'repeat', color: night.chalk },
+  { id: 'variable', label: 'Variabel', icon: 'calculator', color: night.chalkDim },
 ];
 
 export const CATEGORY_BY_ID = Object.fromEntries(CATEGORIES.map((c) => [c.id, c]));
@@ -18,7 +19,7 @@ export const CATEGORY_BY_ID = Object.fromEntries(CATEGORIES.map((c) => [c.id, c]
  * "ulangi" dan "jika" berlaku untuk blok TEPAT di bawahnya.
  */
 export const BLOCK_DEFS = [
-  { id: 'when_start', cat: 'event', hat: true, parts: [{ t: 'saat ▶ diklik' }] },
+  { id: 'when_start', cat: 'event', hat: true, parts: [{ t: 'saat JALANKAN ditekan' }] },
 
   { id: 'move', cat: 'motion', parts: [{ t: 'maju' }, { opts: [1, 2, 3, 4, 5, 6, 7], d: 3 }, { t: 'langkah' }] },
   { id: 'turn_left', cat: 'motion', parts: [{ t: 'belok kiri' }, { opts: [90, 180], d: 90 }, { t: '°' }] },

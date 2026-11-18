@@ -1,13 +1,17 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { View, Text, Pressable, StyleSheet, useWindowDimensions } from 'react-native';
+import { View, Text, StyleSheet, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+
+import { paper, fonts, wob } from '../theme';
+import Robo from '../components/Robo';
+import { Sticker, StickerButton } from '../components/Sticker';
 
 import { BLOCKS, LEVEL_COUNT } from './blocks';
 import { LEVELS, starsFor } from './levels';
 import { simulate } from './engine';
 import { usePhase1Store } from './store';
-import { feedbackBump, feedbackTap, feedbackWin } from './feedback';
+import { feedbackBump, feedbackLose, feedbackStep, feedbackTap, feedbackWin } from './feedback';
 import { initialRobot } from '../engine/grid';
 import GridBoard, { PLAYFUL } from '../engine/GridBoard';
 import { DragProvider } from './DragContext';
@@ -42,11 +46,16 @@ export default function Workspace({ level, onExit, onNext }) {
   const [status, setStatus] = useState('idle'); // idle | running | won | lost
   const [earned, setEarned] = useState(0);
   const [mid, setMid] = useState({ w: 0, h: 0 });
+  const [hint, setHint] = useState(false); // "isi blok dulu" saat MAIN ditekan dengan program kosong
   const timer = useRef(null);
+  const hintTimer = useRef(null);
 
   useEffect(() => {
     clearProgram();
-    return () => clearTimeout(timer.current);
+    return () => {
+      clearTimeout(timer.current);
+      clearTimeout(hintTimer.current);
+    };
   }, [clearProgram]);
 
   const resetRobot = useCallback(() => {
@@ -75,7 +84,14 @@ export default function Workspace({ level, onExit, onNext }) {
   );
 
   const play = () => {
-    if (status === 'running' || program.length === 0) return;
+    if (status === 'running') return;
+    if (program.length === 0) {
+      // Tanpa umpan balik, MAIN terasa "mati" saat program masih kosong.
+      setHint(true);
+      clearTimeout(hintTimer.current);
+      hintTimer.current = setTimeout(() => setHint(false), 2500);
+      return;
+    }
     const sim = simulate(data, program);
     setStatus('running');
     let i = 0;
@@ -89,6 +105,7 @@ export default function Workspace({ level, onExit, onNext }) {
           feedbackWin();
         } else {
           setStatus('lost');
+          feedbackLose();
           timer.current = setTimeout(resetRobot, 1800);
         }
         setStep(-1);
@@ -100,6 +117,8 @@ export default function Workspace({ level, onExit, onNext }) {
       if (st.bump) {
         setBumpKey((k) => k + 1);
         feedbackBump();
+      } else {
+        feedbackStep();
       }
       i += 1;
       timer.current = setTimeout(tick, STEP_MS);
@@ -149,91 +168,113 @@ export default function Workspace({ level, onExit, onNext }) {
           <Canvas program={program} cellSize={cellSize} playingIndex={step} onDrop={handleDrop} />
           <View style={[styles.binCol, { width: blockSize * 0.95 }]}>
             <TrashBin width={blockSize * 0.8} />
-            <Pressable onPress={startOver} style={[styles.reset, { width: blockSize * 0.5, height: blockSize * 0.5 }]}>
-              <Ionicons name="refresh" size={blockSize * 0.3} color="#1E293B" />
-            </Pressable>
+            <StickerButton
+              onPress={startOver}
+              label="Kosongkan program dan mulai ulang"
+              bg={paper.white}
+              radius={blockSize * 0.2}
+              depth={3}
+              k={1}
+              faceStyle={{ width: blockSize * 0.62, height: blockSize * 0.62, alignItems: 'center', justifyContent: 'center' }}
+            >
+              <Ionicons name="refresh" size={blockSize * 0.34} color={paper.ink} />
+            </StickerButton>
           </View>
 
-          {status === 'lost' && (
+          {(status === 'lost' || hint) && (
             <View pointerEvents="none" style={styles.toast}>
-              <Text style={styles.toastText}>Ups, robot belum sampai! Coba lagi ya.</Text>
+              <Text style={styles.toastText}>
+                {hint ? 'Ketuk atau seret blok ke kotak tengah dulu ya!' : 'Ups, robot belum sampai! Coba lagi ya.'}
+              </Text>
             </View>
           )}
         </View>
 
         <Tray blockSize={blockSize} bottomInset={Math.max(insets.bottom, 8)} onDrop={handleDrop} />
 
-        {status === 'won' && (
-          <View style={styles.win}>
-            <View style={styles.winCard}>
-              <Text style={styles.winTitle}>Hebat! Level {level} selesai</Text>
+      </DragProvider>
+      {status === 'won' && (
+        <View style={styles.win}>
+          <Sticker bg={paper.paper} radius={30} depth={7} k={0} style={{ maxWidth: 560 }} faceStyle={styles.winCard}>
+            <View style={styles.winRobo}>
+              <Robo size={Math.min(150, blockSize * 1.7)} />
+            </View>
+            <View style={styles.winBody}>
+              <Text style={styles.winTitle}>Robo sampai! Level {level} selesai</Text>
               <View style={styles.starRow}>
                 {[1, 2, 3].map((n) => (
                   <Ionicons
                     key={n}
                     name={n <= earned ? 'star' : 'star-outline'}
-                    size={blockSize * (n === 2 ? 0.95 : 0.75)}
-                    color="#FACC15"
+                    size={blockSize * 0.62}
+                    color={n <= earned ? paper.mustard : paper.ink}
                   />
                 ))}
               </View>
               <Text style={styles.winSub}>
-                {earned === 3 ? 'Sempurna! Pakai blok paling sedikit.' : 'Coba pakai blok lebih sedikit untuk 3 bintang.'}
+                {earned === 3 ? 'Tiga bintang. Kamu memakai blok paling sedikit.' : 'Coba pakai blok lebih sedikit untuk dapat tiga bintang.'}
               </Text>
               <View style={styles.winBtns}>
-                <Pressable onPress={onExit} style={[styles.btn, { backgroundColor: '#38BDF8' }]}>
-                  <Ionicons name="map" size={22} color="#fff" />
+                <StickerButton onPress={onExit} label="Kembali ke peta level" bg={paper.paperDeep} radius={20} depth={4} k={1} faceStyle={styles.btn}>
+                  <Ionicons name="map" size={20} color={paper.ink} />
                   <Text style={styles.btnText}>Peta</Text>
-                </Pressable>
-                <Pressable onPress={resetRobot} style={[styles.btn, { backgroundColor: '#FB923C' }]}>
-                  <Ionicons name="refresh" size={22} color="#fff" />
+                </StickerButton>
+                <StickerButton onPress={resetRobot} label="Ulangi level ini" bg={paper.paperDeep} radius={20} depth={4} k={2} faceStyle={styles.btn}>
+                  <Ionicons name="refresh" size={20} color={paper.ink} />
                   <Text style={styles.btnText}>Ulangi</Text>
-                </Pressable>
+                </StickerButton>
                 {level < LEVEL_COUNT && (
-                  <Pressable onPress={() => onNext(level + 1)} style={[styles.btn, { backgroundColor: '#22C55E' }]}>
-                    <Text style={styles.btnText}>Lanjut</Text>
-                    <Ionicons name="play" size={22} color="#fff" />
-                  </Pressable>
+                  <StickerButton onPress={() => onNext(level + 1)} label="Lanjut ke level berikutnya" bg={paper.tomato} radius={20} depth={4} k={3} faceStyle={styles.btn}>
+                    <Text style={[styles.btnText, { color: paper.white }]}>Lanjut</Text>
+                    <Ionicons name="play" size={20} color={paper.white} />
+                  </StickerButton>
                 )}
               </View>
             </View>
-          </View>
-        )}
-      </DragProvider>
+          </Sticker>
+        </View>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#BAE6FD' },
+  root: { flex: 1, backgroundColor: paper.paper },
   fill: { flex: 1 },
-  middle: { flex: 1, flexDirection: 'row', alignItems: 'stretch', gap: 10, marginBottom: 12 },
+  middle: { flex: 1, flexDirection: 'row', alignItems: 'stretch', gap: 12, marginBottom: 12 },
   boardWrap: { justifyContent: 'center', flexShrink: 0 },
   binCol: { alignSelf: 'stretch', justifyContent: 'space-evenly', alignItems: 'center' },
-  reset: { borderRadius: 999, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', elevation: 2 },
   toast: {
     position: 'absolute',
     top: 4,
     alignSelf: 'center',
-    left: '30%',
-    right: '30%',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 16,
-    backgroundColor: '#1E293B',
+    left: '26%',
+    right: '26%',
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    ...wob(16, 2),
+    backgroundColor: paper.ink,
   },
-  toastText: { color: '#fff', fontWeight: '800', textAlign: 'center', fontSize: 13 },
+  toastText: { color: paper.paper, fontFamily: fonts.hand, textAlign: 'center', fontSize: 17 },
   win: {
-    ...StyleSheet.absoluteFillObject,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 200,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(30,41,59,0.45)',
+    backgroundColor: 'rgba(43,42,51,0.55)',
+    padding: 16,
   },
-  winCard: { backgroundColor: '#fff', borderRadius: 28, padding: 20, alignItems: 'center', gap: 8, maxWidth: 440 },
-  winTitle: { fontSize: 22, fontWeight: '900', color: '#1E293B' },
-  starRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  winSub: { fontSize: 14, color: '#475569', textAlign: 'center' },
-  winBtns: { flexDirection: 'row', gap: 10, marginTop: 6 },
-  btn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20 },
-  btnText: { color: '#fff', fontWeight: '900', fontSize: 16 },
+  winCard: { flexDirection: 'row', alignItems: 'center', padding: 18, gap: 16 },
+  winRobo: { alignItems: 'center', justifyContent: 'center' },
+  winBody: { flexShrink: 1, alignItems: 'flex-start', gap: 6 },
+  winTitle: { fontFamily: fonts.hand, fontSize: 28, lineHeight: 32, color: paper.ink },
+  starRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  winSub: { fontFamily: fonts.body, fontSize: 14, lineHeight: 19, color: paper.ink },
+  winBtns: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 6 },
+  btn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingVertical: 10, minHeight: 48 },
+  btnText: { fontFamily: fonts.hand, fontSize: 20, color: paper.ink },
 });

@@ -2,14 +2,17 @@ import React, { useEffect, useState } from 'react';
 import { BackHandler, View, StyleSheet } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 
+import { paper } from '../theme';
 import OrientedScreen from '../components/OrientedScreen';
 import { OrientationLock } from '../hooks/useOrientationLock';
 import StoryMap from '../phase1/StoryMap';
 import Workspace from '../phase1/Workspace';
+import { useMusic } from '../audio';
 
 /** Isi Fase 1: Peta Cerita (pilih level) atau Workspace drag & drop. */
 function Phase1Content({ navigation }) {
   const [level, setLevel] = useState(null); // null = peta cerita
+  useMusic('pagi');
 
   // Tombol back Android: workspace -> peta dulu, baru keluar dari Fase 1.
   useEffect(() => {
@@ -42,7 +45,7 @@ function Phase1Content({ navigation }) {
  */
 export default function Phase1Screen({ navigation }) {
   return (
-    <OrientedScreen lock={OrientationLock.LANDSCAPE} background="#7DD3FC">
+    <OrientedScreen lock={OrientationLock.LANDSCAPE} background={paper.paper}>
       <Phase1Content navigation={navigation} />
     </OrientedScreen>
   );

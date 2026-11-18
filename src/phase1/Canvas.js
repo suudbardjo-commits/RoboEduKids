@@ -1,29 +1,29 @@
 import React, { useRef } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import Animated, { useAnimatedStyle } from 'react-native-reanimated';
-import { Ionicons } from '@expo/vector-icons';
 
 import { BLOCK_INDEX } from './blocks';
 import DraggableBlock from './DraggableBlock';
 import { useDrag } from './DragContext';
+import { paper, fonts, wob } from '../theme';
+
+const IDLE = { backgroundColor: '#FFFDF6', borderColor: paper.ink };
+const ADD = { backgroundColor: '#E3F0E1', borderColor: paper.leaf };
+const REMOVE = { backgroundColor: '#F8DDD2', borderColor: paper.tomato };
 
 /**
- * Main canvas: the drop target. Placed blocks flow left-to-right after the
- * robot's "start" marker. Dragging a placed block and releasing it outside the
- * canvas deletes it.
+ * Kanvas: tempat menjatuhkan blok. Blok tersusun dari kiri ke kanan setelah tanda "mulai" Robo.
+ * Menyeret blok dari kanvas lalu melepasnya di luar kanvas = menghapusnya.
  */
 export default function Canvas({ program, cellSize, playingIndex, onDrop }) {
   const drag = useDrag();
   const ref = useRef(null);
 
-  // Green glow when a tray block hovers the canvas, dim when a canvas block is leaving it.
+  // Hijau saat blok tray melayang di atas kanvas; merah muda saat blok kanvas akan dihapus.
   const surface = useAnimatedStyle(() => {
-    if (!drag.active.value) return { backgroundColor: '#FFFFFF', borderColor: '#94A3B8' };
-    // (jatuhkan di sini = blok ditambahkan)
-    if (drag.overCanvas.value) return { backgroundColor: '#ECFDF5', borderColor: '#22C55E' };
-    return drag.srcIndex.value >= 0
-      ? { backgroundColor: '#FEE2E2', borderColor: '#EF4444' }
-      : { backgroundColor: '#FFFFFF', borderColor: '#94A3B8' };
+    if (!drag.active.value) return IDLE;
+    if (drag.overCanvas.value) return ADD;
+    return drag.srcIndex.value >= 0 ? REMOVE : IDLE;
   });
 
   return (
@@ -31,11 +31,18 @@ export default function Canvas({ program, cellSize, playingIndex, onDrop }) {
       ref={ref}
       collapsable={false}
       onLayout={() => drag.registerCanvas(ref)}
-      style={[styles.canvas, surface]}
+      style={[styles.canvas, wob(26, 1), surface]}
     >
       <View style={styles.flow}>
-        <View style={[styles.start, { width: cellSize, height: cellSize, borderRadius: cellSize * 0.3 }]}>
-          <Ionicons name="hardware-chip" size={cellSize * 0.55} color="#fff" />
+        <View style={[styles.start, wob(cellSize * 0.3, 2), { width: cellSize, height: cellSize }]}>
+          <View style={styles.eyes}>
+            {[0, 1].map((i) => (
+              <View key={i} style={[styles.eye, { width: cellSize * 0.2, height: cellSize * 0.2, borderRadius: cellSize * 0.1 }]}>
+                <View style={{ width: cellSize * 0.08, height: cellSize * 0.08, borderRadius: cellSize * 0.04, backgroundColor: paper.ink }} />
+              </View>
+            ))}
+          </View>
+          <Text style={[styles.startText, { fontSize: Math.max(11, cellSize * 0.2) }]}>Mulai</Text>
         </View>
 
         {program.map((id, i) => (
@@ -46,14 +53,12 @@ export default function Canvas({ program, cellSize, playingIndex, onDrop }) {
 
         {program.length === 0 && (
           <View style={styles.hint}>
-            <Ionicons name="hand-left" size={cellSize * 0.5} color="#CBD5E1" />
-            <Ionicons name="arrow-forward" size={cellSize * 0.4} color="#CBD5E1" />
             {[0, 1, 2].map((n) => (
-              <View
-                key={n}
-                style={[styles.slot, { width: cellSize, height: cellSize, borderRadius: cellSize * 0.26 }]}
-              />
+              <View key={n} style={[styles.slot, wob(cellSize * 0.26, n), { width: cellSize, height: cellSize }]} />
             ))}
+            <Text style={[styles.hintText, { fontSize: Math.max(15, cellSize * 0.26) }]}>
+              Ketuk atau seret blok ke sini
+            </Text>
           </View>
         )}
       </View>
@@ -61,25 +66,27 @@ export default function Canvas({ program, cellSize, playingIndex, onDrop }) {
   );
 }
 
-/** Wraps a canvas block with a ring + scale while the program is "running". */
+/** Cincin tomat + sedikit membesar pada blok yang sedang dijalankan. */
 function PlayHighlight({ active, children }) {
-  return (
-    <View style={[styles.hl, active && styles.hlOn]}>{children}</View>
-  );
+  return <View style={[styles.hl, active && styles.hlOn]}>{children}</View>;
 }
 
 const styles = StyleSheet.create({
-  canvas: {
-    flex: 1,
-    borderRadius: 28,
-    borderWidth: 4,
-    borderStyle: 'dashed',
-    padding: 12,
-  },
+  canvas: { flex: 1, borderWidth: 3, borderStyle: 'dashed', padding: 12 },
   flow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 10 },
-  start: { backgroundColor: '#F43F5E', alignItems: 'center', justifyContent: 'center' },
-  hint: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  slot: { borderWidth: 3, borderStyle: 'dashed', borderColor: '#E2E8F0' },
-  hl: { padding: 3, borderRadius: 22, borderWidth: 3, borderColor: 'transparent' },
-  hlOn: { borderColor: '#FACC15', backgroundColor: '#FEF9C3', transform: [{ scale: 1.1 }] },
+  start: {
+    backgroundColor: paper.tomato,
+    borderWidth: 3,
+    borderColor: paper.ink,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  eyes: { flexDirection: 'row', gap: 6 },
+  eye: { backgroundColor: paper.white, borderWidth: 2, borderColor: paper.ink, alignItems: 'center', justifyContent: 'center' },
+  startText: { fontFamily: fonts.hand, color: paper.white, marginTop: 2 },
+  hint: { flexDirection: 'row', alignItems: 'center', gap: 10, flexShrink: 1, flexWrap: 'wrap' },
+  slot: { borderWidth: 3, borderStyle: 'dashed', borderColor: '#C9B88F' },
+  hintText: { fontFamily: fonts.hand, color: '#6B5F45', flexShrink: 1 },
+  hl: { padding: 3, borderRadius: 18, borderWidth: 3, borderColor: 'transparent' },
+  hlOn: { borderColor: paper.tomato, backgroundColor: '#FBE3D9', transform: [{ scale: 1.08 }] },
 });

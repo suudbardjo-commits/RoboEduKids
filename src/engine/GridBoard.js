@@ -8,41 +8,41 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 
-/** Visual themes. The board logic is identical; only the look differs per phase. */
+/** Tema visual. Logika papan sama; hanya tampilan per fase yang beda. */
 export const PLAYFUL = {
-  cellA: '#DCFCE7',
-  cellB: '#BBF7D0',
+  cellA: '#FBF3E0',
+  cellB: '#F1E3C2',
   line: 'transparent',
   radius: 0.2,
-  wallBg: '#A16207',
-  wallBorder: '#713F12',
-  wallIcon: 'cube',
-  wallColor: '#FDE68A',
-  goalBg: '#FEF08A',
-  goalBorder: '#EAB308',
-  goalColor: '#DC2626',
-  robotBg: '#F43F5E',
-  robotBorder: '#9F1239',
+  wallBg: '#9A7B57',
+  wallBorder: '#2B2A33',
+  wallIcon: null,
+  wallColor: '#C9AD86',
+  goalBg: '#F2B544',
+  goalBorder: '#2B2A33',
+  goalColor: '#E4572E',
+  robotBg: '#E4572E',
+  robotBorder: '#2B2A33',
   robotColor: '#FFFFFF',
-  frame: '#16A34A',
+  frame: '#2B2A33',
 };
 
 export const NEON = {
-  cellA: 'rgba(34,245,255,0.04)',
-  cellB: 'rgba(34,245,255,0.09)',
-  line: 'rgba(34,245,255,0.25)',
+  cellA: '#21242E',
+  cellB: '#2A2E3A',
+  line: 'transparent',
   radius: 0.12,
-  wallBg: 'rgba(255,61,203,0.22)',
-  wallBorder: '#FF3DCB',
-  wallIcon: 'close',
-  wallColor: '#FF3DCB',
-  goalBg: 'rgba(255,184,46,0.12)',
-  goalBorder: '#FFB82E',
-  goalColor: '#FFB82E',
-  robotBg: '#39FF88',
-  robotBorder: '#0F8A47',
-  robotColor: '#05080F',
-  frame: 'rgba(34,245,255,0.55)',
+  wallBg: '#4A4F5F',
+  wallBorder: '#ECE7DA',
+  wallIcon: null,
+  wallColor: '#6C7286',
+  goalBg: '#3A3426',
+  goalBorder: '#F2B544',
+  goalColor: '#F2B544',
+  robotBg: '#E4572E',
+  robotBorder: '#ECE7DA',
+  robotColor: '#FFFFFF',
+  frame: '#ECE7DA',
 };
 
 /**
@@ -131,7 +131,11 @@ export default function GridBoard({ level, robot, bumpKey = 0, availW, availH, t
               },
             ]}
           >
-            <Ionicons name={theme.wallIcon} size={cell * 0.5} color={theme.wallColor} />
+            {theme.wallIcon ? (
+              <Ionicons name={theme.wallIcon} size={cell * 0.5} color={theme.wallColor} />
+            ) : (
+              <View style={{ width: cell * 0.42, height: cell * 0.1, borderRadius: cell * 0.05, backgroundColor: theme.wallColor }} />
+            )}
           </View>
         </View>
       ))}
@@ -166,13 +170,30 @@ export default function GridBoard({ level, robot, bumpKey = 0, availW, availH, t
               width: body,
               height: body,
               borderRadius: body * 0.28,
+              borderWidth: 3,
               backgroundColor: theme.robotBg,
               borderColor: theme.robotBorder,
             },
           ]}
         >
           <Ionicons name="caret-up" size={body * 0.38} color={theme.robotColor} style={styles.nose} />
-          <Ionicons name="hardware-chip" size={body * 0.46} color={theme.robotColor} />
+          <View style={{ flexDirection: 'row', gap: body * 0.1, marginTop: body * 0.12 }}>
+            {[0, 1].map((i) => (
+              <View
+                key={i}
+                style={{
+                  width: body * 0.24,
+                  height: body * 0.24,
+                  borderRadius: body * 0.12,
+                  backgroundColor: theme.robotColor,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <View style={{ width: body * 0.1, height: body * 0.1, borderRadius: body * 0.05, backgroundColor: '#2B2A33' }} />
+              </View>
+            ))}
+          </View>
         </View>
       </Animated.View>
     </View>
@@ -183,6 +204,6 @@ const styles = StyleSheet.create({
   frame: { borderWidth: 3, overflow: 'hidden' },
   cell: { position: 'absolute' },
   center: { position: 'absolute', alignItems: 'center', justifyContent: 'center' },
-  block: { alignItems: 'center', justifyContent: 'center', borderWidth: 2 },
+  block: { alignItems: 'center', justifyContent: 'center', borderWidth: 3 },
   nose: { position: 'absolute', top: -2 },
 });

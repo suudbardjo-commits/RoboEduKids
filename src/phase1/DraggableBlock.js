@@ -1,4 +1,5 @@
 import React from 'react';
+import { Pressable } from 'react-native';
 import { GestureDetector, usePanGesture } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
@@ -22,8 +23,8 @@ export default function DraggableBlock({ typeIndex, srcIndex = -1, size, inScrol
     // On the canvas: any 6px move picks the block up.
     // (RNGH forbids minDistance together with fail offsets, so offsets only.)
     activeOffsetX: inScroll ? [-10000, 10000] : [-6, 6],
-    activeOffsetY: inScroll ? [-8, 8] : [-6, 6],
-    failOffsetX: inScroll ? [-12, 12] : [-10000, 10000],
+    activeOffsetY: inScroll ? [-6, 6] : [-6, 6],
+    failOffsetX: inScroll ? [-24, 24] : [-10000, 10000],
     onActivate: (e) => {
       'worklet';
       drag.typeIdx.value = typeIndex;
@@ -52,10 +53,20 @@ export default function DraggableBlock({ typeIndex, srcIndex = -1, size, inScrol
     opacity: srcIndex >= 0 && drag.active.value && drag.srcIndex.value === srcIndex ? 0.25 : 1,
   }));
 
+  // Blok di tray juga bisa DIKETUK (bukan hanya diseret): ketukan langsung menambah blok
+  // ke program. Anak kecil hampir selalu mengetuk dulu sebelum mencoba menyeret.
+  const fromTray = srcIndex === -1;
+
   return (
     <GestureDetector gesture={pan}>
       <Animated.View style={fade}>
-        <BlockView typeIndex={typeIndex} size={size} />
+        {fromTray ? (
+          <Pressable onPress={() => onDrop(typeIndex, -1, true)}>
+            <BlockView typeIndex={typeIndex} size={size} />
+          </Pressable>
+        ) : (
+          <BlockView typeIndex={typeIndex} size={size} />
+        )}
       </Animated.View>
     </GestureDetector>
   );

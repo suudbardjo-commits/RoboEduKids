@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-import { colors } from '../theme';
+import { night, fonts } from '../theme';
 import { CATEGORY_BY_ID } from './blockDefs';
 
 const NOTCH_W = 30;
@@ -39,16 +39,29 @@ export default function ScratchBlock({ def, vals, running, onRemove, onCycle, ca
             k += 1;
             const idx = k;
             return (
-              <Pressable key={i} onPress={() => onCycle(idx)} hitSlop={6} style={styles.pill}>
+              <Pressable
+                key={i}
+                onPress={() => onCycle(idx)}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel={`Ganti nilai, sekarang ${vals[idx]}`}
+                style={styles.pill}
+              >
                 <Text style={styles.pillText}>{vals[idx]}</Text>
-                <Ionicons name="caret-down" size={10} color={colors.bg} />
+                <Ionicons name="caret-down" size={10} color={night.chalk} />
               </Pressable>
             );
           })}
         </View>
         {onRemove && (
-          <Pressable onPress={onRemove} hitSlop={10} style={styles.remove}>
-            <Ionicons name="close" size={14} color={colors.bg} />
+          <Pressable
+            onPress={onRemove}
+            hitSlop={12}
+            accessibilityRole="button"
+            accessibilityLabel="Hapus blok"
+            style={styles.remove}
+          >
+            <Ionicons name="close" size={14} color={night.bg} />
           </Pressable>
         )}
       </View>
@@ -60,16 +73,17 @@ export default function ScratchBlock({ def, vals, running, onRemove, onCycle, ca
 
 const styles = StyleSheet.create({
   wrap: { alignSelf: 'flex-start', minWidth: 200 },
-  body: { minHeight: 44, paddingHorizontal: 12, paddingVertical: 8, justifyContent: 'center' },
+  body: { minHeight: 48, paddingHorizontal: 12, paddingVertical: 8, justifyContent: 'center' },
   normal: { borderRadius: 6 },
   hat: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    borderTopLeftRadius: 26,
+    borderTopRightRadius: 14,
     borderBottomLeftRadius: 6,
     borderBottomRightRadius: 6,
     paddingTop: 14,
   },
-  running: { borderWidth: 2, borderColor: '#fff', shadowColor: '#fff', shadowOpacity: 1, shadowRadius: 8, elevation: 8 },
+  // Blok yang sedang jalan: bingkai tomat tebal, tanpa glow.
+  running: { borderWidth: 3, borderColor: night.tomato },
   notch: {
     position: 'absolute',
     top: 0,
@@ -79,18 +93,19 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 4,
     borderBottomRightRadius: 4,
   },
-  row: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6, paddingRight: 26 },
-  text: { color: colors.bg, fontSize: 14, fontWeight: '800' },
+  row: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6, paddingRight: 30 },
+  text: { color: night.bg, fontSize: 15, fontFamily: fonts.bodyHeavy },
   pill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 3,
-    backgroundColor: 'rgba(255,255,255,0.92)',
-    borderRadius: 12,
-    paddingHorizontal: 9,
-    paddingVertical: 2,
+    minHeight: 30,
+    backgroundColor: night.bg,
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
   },
-  pillText: { color: colors.bg, fontSize: 13, fontWeight: '800' },
+  pillText: { color: night.chalk, fontSize: 15, fontFamily: fonts.bodyHeavy },
   bump: {
     marginLeft: 16,
     width: NOTCH_W,
@@ -100,12 +115,12 @@ const styles = StyleSheet.create({
   },
   remove: {
     position: 'absolute',
-    right: 8,
-    top: 10,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: 'rgba(255,255,255,0.65)',
+    right: 6,
+    top: 8,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(22,24,31,0.18)',
     alignItems: 'center',
     justifyContent: 'center',
   },
