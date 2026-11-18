@@ -2,6 +2,7 @@ import { usePhase2Store } from './store';
 import { MISSIONS } from './missions';
 import { runProgram } from './interpreter';
 import { initialRobot } from '../engine/grid';
+import { playSfx } from '../audio';
 
 let timer = null;
 const get = () => usePhase2Store.getState();
@@ -41,7 +42,7 @@ export function startRun() {
 
   patch({ robot: initialRobot(m), runningUid: null, score: 0, progress: 0 });
   if (res.error) {
-    patch({ status: 'error', message: 'Tambahkan blok "saat ▶ diklik" dulu, lalu susun kodenya.' });
+    patch({ status: 'error', message: 'Tambahkan blok "saat JALANKAN ditekan" dulu, lalu susun kodenya.' });
     return;
   }
   patch({ status: 'running', message: '' });
@@ -60,7 +61,9 @@ export function startRun() {
           message: `Berhasil! +100 poin bonus`,
           best: { ...best, [mi]: Math.max(best[mi] || 0, total) },
         });
+        playSfx('menang');
       } else {
+        playSfx('gagal', 0.7);
         patch({
           status: 'fail',
           runningUid: null,
@@ -71,6 +74,7 @@ export function startRun() {
     }
     const st = res.steps[i];
     i += 1;
+    playSfx(st.bump ? 'tabrak' : 'langkah', st.bump ? 0.8 : 0.45);
     patch({
       robot: st.robot,
       runningUid: st.uid,

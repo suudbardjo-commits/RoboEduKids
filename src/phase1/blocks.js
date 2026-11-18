@@ -1,9 +1,12 @@
-// Command block catalogue for Phase 1. Icon-driven: no text on the blocks.
+import { paper } from '../theme';
+
+// Katalog blok perintah Fase 1. Warna membedakan jenis gerak (alasan di DESIGN.md);
+// ikon + kata pendek membuat anak yang baru belajar membaca tetap paham.
 export const BLOCKS = [
-  { id: 'forward', icon: 'arrow-up', color: '#4ADE80', dark: '#16A34A' },
-  { id: 'left', icon: 'arrow-undo', color: '#38BDF8', dark: '#0284C7' },
-  { id: 'right', icon: 'arrow-redo', color: '#FB923C', dark: '#EA580C' },
-  { id: 'loop', icon: 'repeat', color: '#A78BFA', dark: '#7C3AED' },
+  { id: 'forward', label: 'Maju', icon: 'arrow-up', color: paper.leaf },
+  { id: 'left', label: 'Kiri', icon: 'arrow-undo', color: paper.mustard },
+  { id: 'right', label: 'Kanan', icon: 'arrow-redo', color: paper.mustard },
+  { id: 'loop', label: 'Ulang', icon: 'repeat', color: paper.teal },
 ];
 
 export const BLOCK_INDEX = Object.fromEntries(BLOCKS.map((b, i) => [b.id, i]));
